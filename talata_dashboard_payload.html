@@ -40,7 +40,6 @@
     
     const getChartComponents = () => {
         const chartLib = window.ReactChartJs2;
-        // Check for UMD export style (default or root)
         return chartLib ? (chartLib.default || chartLib) : null;
     };
 
@@ -81,8 +80,8 @@
 
     // --- CHART CONFIGURATION COMPONENTS (Using destructured components directly) ---
 
-    const CoachCapacityBarChart = ({ current, required }) => {
-        const BarComponent = getChartComponents()?.Bar;
+    // Note: These now rely on 'chartComponents' being passed down in state
+    const CoachCapacityBarChart = ({ current, required, BarComponent }) => {
         if (!BarComponent) return null;
         const data = {
             labels: ['Current Staff', '2026 Target'],
@@ -114,8 +113,7 @@
     };
 
 
-    const ProgramMixDoughnutChart = ({ programMix }) => {
-        const DoughnutComponent = getChartComponents()?.Doughnut;
+    const ProgramMixDoughnutChart = ({ programMix, DoughnutComponent }) => {
         if (!DoughnutComponent) return null;
         const data = {
             labels: programMix.labels,
@@ -142,8 +140,7 @@
         return <DoughnutComponent data={data} options={options} />;
     };
 
-    const GrowthLineChart = ({ monthlyGrowth }) => {
-        const LineComponent = getChartComponents()?.Line;
+    const GrowthLineChart = ({ monthlyGrowth, LineComponent }) => {
         if (!LineComponent) return null;
         const data = {
             labels: monthlyGrowth.map(d => d.month),
@@ -204,7 +201,7 @@
     const App = () => {
         const [chartComponents, setChartComponents] = useState(null);
         
-        // Use useEffect to wait for dependencies to load and run registration ONCE
+        // This effect runs to aggressively check and load the components
         useEffect(() => {
             let interval;
             
@@ -238,6 +235,7 @@
             
             // Start checking immediately if not loaded
             if (!chartComponents) {
+                // If dependencies were not loaded on the initial render, set up the poller
                 interval = setInterval(initialize, 100);
             }
             
@@ -252,6 +250,7 @@
                 <div class="flex flex-col justify-center items-center w-full h-full p-10" style={{minHeight: '100vh', background: COLORS.appBackground}}>
                     <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-r-2 border-teal-500"></div>
                     <p class="text-xl text-teal-300 mt-5">Loading Talata Dashboard...</p>
+                    <p class="text-xs text-gray-500 mt-2">Checking dependencies (Chart.js/React)</p>
                 </div>
             );
         }
@@ -336,7 +335,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
 
                     {/* Left Column: Coaching Capacity */}
-                    <div class="chart-card lg:col-span-1 h-[250px] flex flex-col">
+                    <div class="chart-card lg:col-span-1 h-[250px]">
                         <SectionHeader
                             title="Coaching Human Capital Status"
                             subtitle={`Current staff vs. the required ${requiredCoaches} coaches for the expanded teams.`}
