@@ -40,6 +40,7 @@
     
     const getChartComponents = () => {
         const chartLib = window.ReactChartJs2;
+        // Check for UMD export style (default or root)
         return chartLib ? (chartLib.default || chartLib) : null;
     };
 
@@ -78,9 +79,8 @@
     };
 
 
-    // --- CHART CONFIGURATION COMPONENTS (Using destructured components directly) ---
+    // --- CHART CONFIGURATION COMPONENTS ---
 
-    // Note: These now rely on 'chartComponents' being passed down in state
     const CoachCapacityBarChart = ({ current, required, BarComponent }) => {
         if (!BarComponent) return null;
         const data = {
