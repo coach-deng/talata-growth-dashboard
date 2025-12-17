@@ -1,377 +1,377 @@
-<div id="root"></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talata Growth Command Center</title>
+    <!-- Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load React and ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Load Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Load Chart.js (Core) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Load react-chartjs-2 UMD bundle (Using the robust Cloudflare CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-chartjs-2/5.2.0/react-chartjs-2.umd.min.js"></script>
 
-<!-- Load essential CDNs directly into the Streamlit component -->
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-chartjs-2/5.2.0/react-chartjs-2.umd.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-
-
-<style>
-/* Streamlit UI Overrides */
-#root {
-    width: 100%;
-    min-height: 100vh;
-}
-.chart-card {
-    background-color: #1C2541; /* Dark Card Color */
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    min-height: 400px;
-}
-.kpi-card {
-     background-color: #1C2541;
-     border-radius: 0.75rem;
-     border-left: 5px solid;
-     padding: 1.5rem;
-     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-</style>
-
-<script type="text/babel">
-    
-    // --- Dependency Initialization Utility ---
-    const { useState, useEffect } = React;
-    const ChartJS = window.Chart;
-    
-    const getChartComponents = () => {
-        const chartLib = window.ReactChartJs2;
-        return chartLib ? (chartLib.default || chartLib) : null;
-    };
-
-    // --- MOCK DATA ---
-    const MOCK_DATA = {
-        totalMembers: 125,
-        academyMembers: 78, 
-        kobenhavnMembers: 35, 
-        mensMembers: 12, 
-        totalCoaches: 4, 
-        requiredCoaches: 6,
-        campRevenuePast: 28000, 
-        campRevenueTarget: 45000, 
-        monthlyGrowth: [
-            { month: 'Jan', members: 60 },
-            { month: 'Mar', members: 75 },
-            { month: 'May', members: 90 },
-            { month: 'Jul', members: 95 },
-            { month: 'Sep', members: 110 },
-            { month: 'Nov', members: 125 },
-        ],
-        programMix: {
-            labels: ['Academy (4000 DKK)', 'København (2000 DKK)', 'Men\'s (2000 DKK)'],
-            data: [78, 35, 12],
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
         }
-    };
+        #root {
+            width: 100%;
+            min-height: 100vh;
+            background-color: #0B132B; /* Deep Navy Background */
+            color: #E0E0E0;
+        }
+        .chart-card {
+            background-color: #1C2541; /* Dark Card Color */
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            min-height: 400px;
+        }
+        .kpi-card {
+             background-color: #1C2541;
+             border-radius: 0.75rem;
+             border-left: 5px solid;
+             padding: 1.5rem;
+             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-    const COLORS = {
-        primaryTeal: 'rgba(46, 196, 182, 1)',   
-        secondaryOrange: 'rgba(255, 159, 28, 1)', 
-        dangerRed: 'rgba(231, 29, 54, 1)',      
-        cardBackground: '#1C2541',             
-        appBackground: '#0B132B',             
-        lightText: '#E0E0E0',
-        gridLine: 'rgba(224, 224, 224, 0.15)',
-    };
-
-
-    // --- CHART CONFIGURATION COMPONENTS ---
-    // These components will receive the destructured Chart components (Bar, Doughnut, Line) via state.
-
-    const CoachCapacityBarChart = ({ current, required, BarComponent }) => {
-        if (!BarComponent) return null;
-        const data = {
-            labels: ['Current Staff', '2026 Target'],
-            datasets: [
-                {
-                    label: 'Coaches',
-                    data: [current, required],
-                    backgroundColor: [COLORS.primaryTeal, COLORS.secondaryOrange],
-                    borderWidth: 0,
-                    borderRadius: 4,
-                },
-            ],
-        };
-
-        const options = {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { title: (t) => t[0].label, label: (c) => `Count: ${c.raw}` } }
-            },
-            scales: {
-                x: { max: required + 1, ticks: { color: COLORS.lightText }, grid: { color: COLORS.gridLine } },
-                y: { ticks: { color: COLORS.lightText }, grid: { display: false } }
-            }
-        };
-        return <BarComponent data={data} options={options} />;
-    };
-
-
-    const ProgramMixDoughnutChart = ({ programMix, DoughnutComponent }) => {
-        if (!DoughnutComponent) return null;
-        const data = {
-            labels: programMix.labels,
-            datasets: [
-                {
-                    label: 'Members',
-                    data: programMix.data,
-                    backgroundColor: [COLORS.primaryTeal, COLORS.secondaryOrange, COLORS.lightText.replace('1', '0.5')],
-                    borderColor: COLORS.cardBackground,
-                    borderWidth: 4,
-                },
-            ],
-        };
-
-        const options = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'right', labels: { color: COLORS.lightText } },
-                tooltip: { callbacks: { title: (t) => t[0].label, label: (c) => `${c.label}: ${c.raw} members (${((c.raw / MOCK_DATA.totalMembers) * 100).toFixed(1)}%)` } }
-            }
-        };
-
-        return <DoughnutComponent data={data} options={options} />;
-    };
-
-    const GrowthLineChart = ({ monthlyGrowth, LineComponent }) => {
-        if (!LineComponent) return null;
-        const data = {
-            labels: monthlyGrowth.map(d => d.month),
-            datasets: [
-                {
-                    label: 'Total Membership',
-                    data: monthlyGrowth.map(d => d.members),
-                    borderColor: COLORS.primaryTeal,
-                    backgroundColor: COLORS.primaryTeal.replace('1', '0.2'),
-                    tension: 0.4,
-                    pointBackgroundColor: COLORS.secondaryOrange,
-                    pointRadius: 5,
-                    fill: true
-                },
-            ],
-        };
-
-        const options = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { title: (t) => t[0].label, label: (c) => `Members: ${c.raw}` } }
-            },
-            scales: {
-                y: { beginAtZero: true, title: { display: true, text: 'Members', color: COLORS.lightText }, ticks: { color: COLORS.lightText }, grid: { color: COLORS.gridLine } },
-                x: { ticks: { color: COLORS.lightText }, grid: { color: COLORS.gridLine } }
-            }
-        };
-
-        return <LineComponent data={data} options={options} />;
-    };
-
-
-    // --- UI COMPONENTS ---
-
-    const KPI_Card = ({ title, value, unit, icon, colorClass, borderClass }) => (
-        <div class={`kpi-card flex items-center justify-between transition-all duration-300 hover:bg-[#2A334B] border-l-4 ${borderClass}`}>
-            <div>
-                <p class="text-sm font-semibold text-gray-400 uppercase">{title}</p>
-                <p class="text-4xl font-extrabold mt-1 text-white">{value}</p>
-                <p class="text-sm text-gray-400">{unit}</p>
-            </div>
-            <div class={`text-4xl opacity-80 ${colorClass}`}>
-                {icon}
-            </div>
-        </div>
-    );
-
-    const SectionHeader = ({ title, subtitle }) => (
-        <div class="mb-6 border-b border-gray-700 pb-2">
-            <h2 class="text-2xl font-bold text-white">{title}</h2>
-            <p class="text-sm text-gray-400 mt-1">{subtitle}</p>
-        </div>
-    );
-
-    // --- MAIN APP COMPONENT ---
-    const App = () => {
-        const [chartComponents, setChartComponents] = useState(null);
+    <script type="text/babel">
         
-        // This effect runs to aggressively check and load the components
-        useEffect(() => {
-            let interval;
-            
-            const initialize = () => {
-                const components = getChartComponents();
-                if (components && window.Chart) {
-                    clearInterval(interval); 
-                    
-                    // 1. Force Chart registration
-                    window.Chart.register(
-                        window.Chart.CategoryScale,
-                        window.Chart.LinearScale,
-                        window.Chart.BarElement,
-                        window.Chart.Title,
-                        window.Chart.Tooltip,
-                        window.Chart.Legend,
-                        window.Chart.ArcElement,
-                        window.Chart.LineElement,
-                        window.Chart.PointElement
-                    );
+        // --- Dependency Initialization (Synchronous Setup) ---
+        // We use a short timeout to handle the final loading race condition.
+        
+        setTimeout(() => {
+            const { useState, useEffect } = React;
+            const ChartJS = window.Chart;
 
-                    // 2. Set the state
-                    setChartComponents({
-                        Bar: components.Bar,
-                        Doughnut: components.Doughnut,
-                        Line: components.Line
-                    });
-                    
+            // Safely get the chart components
+            const getChartComponents = () => {
+                const chartLib = window.ReactChartJs2;
+                return chartLib ? (chartLib.default || chartLib) : null;
+            };
+
+            const ChartComponents = getChartComponents();
+            
+            if (!ChartComponents || !ChartJS) {
+                // If dependencies are still missing after the timeout, show a critical error
+                const rootElement = document.getElementById('root');
+                if (rootElement) {
+                    rootElement.innerHTML = '<div style="background-color: #E71D36; padding: 20px; border-radius: 8px; text-align: center; margin: 20px; color: #FDFFFC;">CRITICAL ERROR: Dependencies (Chart.js/React) failed to load. Please ensure the page is running via a web server (http://localhost:8000).</div>';
+                }
+                return;
+            }
+            
+            // Destructure necessary components directly
+            const { Bar, Doughnut, Line } = ChartComponents; 
+
+            // Force synchronous registration of all necessary chart modules.
+            ChartJS.register(
+                ChartJS.CategoryScale,
+                ChartJS.LinearScale,
+                ChartJS.BarElement,
+                ChartJS.Title,
+                ChartJS.Tooltip,
+                ChartJS.Legend,
+                ChartJS.ArcElement,
+                ChartJS.LineElement,
+                ChartJS.PointElement
+            );
+
+            // --- MOCK DATA ---
+            const MOCK_DATA = {
+                totalMembers: 125,
+                academyMembers: 78, 
+                kobenhavnMembers: 35, 
+                mensMembers: 12, 
+                totalCoaches: 4, 
+                requiredCoaches: 6,
+                campRevenuePast: 28000, 
+                campRevenueTarget: 45000, 
+                monthlyGrowth: [
+                    { month: 'Jan', members: 60 },
+                    { month: 'Mar', members: 75 },
+                    { month: 'May', members: 90 },
+                    { month: 'Jul', members: 95 },
+                    { month: 'Sep', members: 110 },
+                    { month: 'Nov', members: 125 },
+                ],
+                programMix: {
+                    labels: ['Academy (4000 DKK)', 'København (2000 DKK)', 'Men\'s (2000 DKK)'],
+                    data: [78, 35, 12],
                 }
             };
-            
-            // Start checking immediately if not loaded
-            if (!chartComponents) {
-                interval = setInterval(initialize, 100);
-            }
-            
-            return () => clearInterval(interval);
 
-        }, []); 
+            const COLORS = {
+                primaryTeal: 'rgba(46, 196, 182, 1)',   
+                secondaryOrange: 'rgba(255, 159, 28, 1)', 
+                dangerRed: 'rgba(231, 29, 54, 1)',      
+                cardBackground: '#1C2541',             
+                appBackground: '#0B132B',             
+                lightText: '#E0E0E0',
+                gridLine: 'rgba(224, 224, 224, 0.15)',
+            };
 
-        if (!chartComponents) {
-             return (
-                <div class="flex flex-col justify-center items-center w-full h-full p-10" style={{minHeight: '100vh', background: COLORS.appBackground}}>
-                    <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-r-2 border-teal-500"></div>
-                    <p class="text-xl text-teal-300 mt-5">Loading Talata Dashboard...</p>
+
+            // --- CHART CONFIGURATION COMPONENTS (Using destructured components directly) ---
+
+            const CoachCapacityBarChart = ({ current, required }) => {
+                const data = {
+                    labels: ['Current Staff', '2026 Target'],
+                    datasets: [
+                        {
+                            label: 'Coaches',
+                            data: [current, required],
+                            backgroundColor: [COLORS.primaryTeal, COLORS.secondaryOrange],
+                            borderWidth: 0,
+                            borderRadius: 4,
+                        },
+                    ],
+                };
+
+                const options = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { title: (t) => t[0].label, label: (c) => `Count: ${c.raw}` } }
+                    },
+                    scales: {
+                        x: { max: required + 1, ticks: { color: COLORS.lightText }, grid: { color: COLORS.gridLine } },
+                        y: { ticks: { color: COLORS.lightText }, grid: { display: false } }
+                    }
+                };
+
+                return (
+                    <div class="h-full flex flex-col justify-center">
+                         {Bar && <Bar data={data} options={options} />}
+                        </div>
+                    );
+            };
+
+
+            const ProgramMixDoughnutChart = ({ programMix }) => {
+                const data = {
+                    labels: programMix.labels,
+                    datasets: [
+                        {
+                            label: 'Members',
+                            data: programMix.data,
+                            backgroundColor: [COLORS.primaryTeal, COLORS.secondaryOrange, COLORS.lightText.replace('1', '0.5')],
+                            borderColor: COLORS.cardBackground,
+                            borderWidth: 4,
+                        },
+                    ],
+                };
+
+                const options = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: COLORS.lightText } },
+                        tooltip: { callbacks: { title: (t) => t[0].label, label: (c) => `${c.label}: ${c.raw} members (${((c.raw / MOCK_DATA.totalMembers) * 100).toFixed(1)}%)` } }
+                    }
+                };
+
+                return (Doughnut && <Doughnut data={data} options={options} />);
+            };
+
+            const GrowthLineChart = ({ monthlyGrowth }) => {
+                const data = {
+                    labels: monthlyGrowth.map(d => d.month),
+                    datasets: [
+                        {
+                            label: 'Total Membership',
+                            data: monthlyGrowth.map(d => d.members),
+                            borderColor: COLORS.primaryTeal,
+                            backgroundColor: COLORS.primaryTeal.replace('1', '0.2'),
+                            tension: 0.4,
+                            pointBackgroundColor: COLORS.secondaryOrange,
+                            pointRadius: 5,
+                            fill: true
+                        },
+                    ],
+                };
+
+                const options = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { title: (t) => t[0].label, label: (c) => `Members: ${c.raw}` } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Members', color: COLORS.lightText }, ticks: { color: COLORS.lightText }, grid: { color: COLORS.gridLine } },
+                        x: { ticks: { color: COLORS.lightText }, grid: { color: COLORS.gridLine } }
+                    }
+                };
+
+                return (Line && <Line data={data} options={options} />);
+            };
+
+
+            // --- UI COMPONENTS ---
+
+            const KPI_Card = ({ title, value, unit, icon, colorClass, borderClass }) => (
+                <div class={`kpi-card flex items-center justify-between transition-all duration-300 hover:bg-[#2A334B] border-l-4 ${borderClass}`}>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-400 uppercase">{title}</p>
+                        <p class="text-4xl font-extrabold mt-1 text-white">{value}</p>
+                        <p class="text-sm text-gray-400">{unit}</p>
+                    </div>
+                    <div class={`text-4xl opacity-80 ${colorClass}`}>
+                        {icon}
+                    </div>
                 </div>
             );
-        }
-        
-        // Render the full dashboard once components are confirmed in state
-        const { totalMembers, academyMembers, kobenhavnMembers, monthlyGrowth, programMix, totalCoaches, requiredCoaches, campRevenuePast, campRevenueTarget } = MOCK_DATA;
-        const academyMixPercentage = ((academyMembers / totalMembers) * 100);
 
-        return (
-            <div class={`p-4 sm:p-8`} style={{ color: COLORS.lightText, background: COLORS.appBackground }}>
-                <header class="text-center py-6 border-b border-gray-700 mb-8 bg-[#1C2541] rounded-lg shadow-xl">
-                    <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight" style={{ color: COLORS.primaryTeal }}>
-                        Talata Growth Command Center
-                    </h1>
-                    <p class="text-gray-400 mt-2 text-lg">2026 Strategy Execution & Operational Insights</p>
-                </header>
-
-                {/* KPI Cards */}
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <KPI_Card
-                        title="Total Active Members"
-                        value={totalMembers}
-                        unit="Players Enrolled"
-                        icon="🏀"
-                        colorClass="text-green-400"
-                        borderClass="border-green-500"
-                    />
-                    <KPI_Card
-                        title="Elite Program Mix"
-                        value={`${academyMixPercentage.toFixed(0)}%`}
-                        unit={`Academy Members (${academyMembers} / ${totalMembers})`}
-                        icon="👑"
-                        colorClass="text-indigo-400"
-                        borderClass="border-indigo-500"
-                    />
-                    <KPI_Card
-                        title="Coaching Capacity"
-                        value={`${totalCoaches} / ${requiredCoaches}`}
-                        unit="Staff Hires Needed (2026 Target)"
-                        icon="🧠"
-                        colorClass="text-yellow-400"
-                        borderClass="border-yellow-500"
-                    />
-                    <KPI_Card
-                        title="Camp Revenue Goal"
-                        value={`DKK ${(campRevenuePast / 1000).toFixed(1)}K`}
-                        unit={`Achieved (Target: ${campRevenueTarget / 1000}K DKK)`}
-                        icon="💰"
-                        colorClass="text-red-400"
-                        borderClass="border-red-500"
-                    />
+            const SectionHeader = ({ title, subtitle }) => (
+                <div class="mb-6 border-b border-gray-700 pb-2">
+                    <h2 class="text-2xl font-bold text-white">{title}</h2>
+                    <p class="text-sm text-gray-400 mt-1">{subtitle}</p>
                 </div>
+            );
 
-                {/* Core Charts Section */}
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            // --- MAIN APP COMPONENT ---
+            const App = () => {
+                
+                // This component relies on the global setup (ChartJS.register) being complete.
+                const { totalMembers, academyMembers, kobenhavnMembers, monthlyGrowth, programMix, totalCoaches, requiredCoaches, campRevenuePast, campRevenueTarget } = MOCK_DATA;
+                const academyMixPercentage = ((academyMembers / totalMembers) * 100);
 
-                    {/* Left Column: Membership Growth */}
-                    <div class="lg:col-span-2 chart-card h-[500px]">
-                        <SectionHeader
-                            title="Membership Growth Trend"
-                            subtitle="Tracking organic growth against annual targets."
-                        />
-                        <div class="chart-container h-[400px]">
-                            <GrowthLineChart monthlyGrowth={monthlyGrowth} LineComponent={chartComponents.Line} />
+                return (
+                    <div class={`p-4 sm:p-8`} style={{ color: COLORS.lightText, background: COLORS.appBackground }}>
+                        <header class="text-center py-6 border-b border-gray-700 mb-8 bg-[#1C2541] rounded-lg shadow-xl">
+                            <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight" style={{ color: COLORS.primaryTeal }}>
+                                Talata Growth Command Center
+                            </h1>
+                            <p class="text-gray-400 mt-2 text-lg">2026 Strategy Execution & Operational Insights</p>
+                        </header>
+
+                        {/* KPI Cards */}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                            <KPI_Card
+                                title="Total Active Members"
+                                value={totalMembers}
+                                unit="Players Enrolled"
+                                icon="🏀"
+                                colorClass="text-green-400"
+                                borderClass="border-green-500"
+                            />
+                            <KPI_Card
+                                title="Elite Program Mix"
+                                value={`${academyMixPercentage.toFixed(0)}%`}
+                                unit={`Academy Members (${academyMembers} / ${totalMembers})`}
+                                icon="👑"
+                                colorClass="text-indigo-400"
+                                borderClass="border-indigo-500"
+                            />
+                            <KPI_Card
+                                title="Coaching Capacity"
+                                value={`${totalCoaches} / ${requiredCoaches}`}
+                                unit="Staff Hires Needed (2026 Target)"
+                                icon="🧠"
+                                colorClass="text-yellow-400"
+                                borderClass="border-yellow-500"
+                            />
+                            <KPI_Card
+                                title="Camp Revenue Goal"
+                                value={`DKK ${(campRevenuePast / 1000).toFixed(1)}K`}
+                                unit={`Achieved (Target: ${campRevenueTarget / 1000}K DKK)`}
+                                icon="💰"
+                                colorClass="text-red-400"
+                                borderClass="border-red-500"
+                            />
                         </div>
-                    </div>
 
-                    {/* Right Column: Program Mix */}
-                    <div class="chart-card h-[500px]">
-                        <SectionHeader
-                            title="Revenue Quality: Program Mix"
-                            subtitle="Distribution across pricing tiers (4000 DKK vs. 2000 DKK)."
-                        />
-                        <div class="chart-container h-[400px] flex items-center justify-center">
-                            <ProgramMixDoughnutChart programMix={programMix} DoughnutComponent={chartComponents.Doughnut} />
-                        </div>
-                    </div>
+                        {/* Core Charts Section */}
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                </div>
-
-                {/* Bottom Row: Capacity & Financial Milestones */}
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-
-                    {/* Left Column: Coaching Capacity */}
-                    <div class="chart-card lg:col-span-1 h-[250px] flex flex-col">
-                        <SectionHeader
-                            title="Coaching Human Capital Status"
-                            subtitle={`Current staff vs. the required ${requiredCoaches} coaches for the expanded teams.`}
-                        />
-                        <div class="chart-container h-[120px] pt-4">
-                            <CoachCapacityBarChart current={totalCoaches} required={requiredCoaches} BarComponent={chartComponents.Bar} />
-                        </div>
-                    </div>
-                    
-                    {/* Right Column: Key Financial Targets */}
-                    <div class="chart-card lg:col-span-2 flex flex-col h-[250px]">
-                        <SectionHeader
-                            title="Financial Stability Milestones (2026 Q1)"
-                            subtitle="Tracking critical revenue and operational security goals."
-                        />
-                        <div class="grid grid-cols-2 gap-4 mt-2">
-                            <div class="p-4 rounded-lg border-l-4 border-yellow-500 bg-gray-700/50">
-                                <p class="text-lg font-semibold text-white">Main Partner Secured</p>
-                                <p class="text-sm text-gray-400">Status: In Negotiation</p>
-                                <p class="text-xs text-yellow-400 mt-1">Goal: Significant cash injection (Q1 2026)</p>
+                            {/* Left Column: Membership Growth */}
+                            <div class="lg:col-span-2 chart-card h-[500px]">
+                                <SectionHeader
+                                    title="Membership Growth Trend"
+                                    subtitle="Tracking organic growth against annual targets."
+                                />
+                                <div class="chart-container h-[400px]">
+                                    <GrowthLineChart monthlyGrowth={monthlyGrowth} />
+                                </div>
                             </div>
-                            <div class="p-4 rounded-lg border-l-4 border-red-500 bg-gray-700/50">
-                                <p class="text-lg font-semibold text-white">Game Venue Secured</p>
-                                <p class="text-sm text-gray-400">Status: Venue Identified</p>
-                                <p class="text-xs text-red-400 mt-1">Goal: Stabilize operations and reduce DBBF fines</p>
+
+                            {/* Right Column: Program Mix */}
+                            <div class="chart-card h-[500px]">
+                                <SectionHeader
+                                    title="Revenue Quality: Program Mix"
+                                    subtitle="Distribution across pricing tiers (4000 DKK vs. 2000 DKK)."
+                                />
+                                <div class="chart-container h-[400px] flex items-center justify-center">
+                                    <ProgramMixDoughnutChart programMix={programMix} />
+                                </div>
+                            </div>
+
+                        </div>
+
+                        {/* Bottom Row: Capacity & Financial Milestones */}
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+
+                            {/* Left Column: Coaching Capacity */}
+                            <div class="chart-card lg:col-span-1 h-[250px] flex flex-col">
+                                <SectionHeader
+                                    title="Coaching Human Capital Status"
+                                    subtitle={`Current staff vs. the required ${requiredCoaches} coaches for the expanded teams.`}
+                                />
+                                <div class="chart-container h-[120px] pt-4">
+                                    <CoachCapacityBarChart current={totalCoaches} required={requiredCoaches} />
+                                </div>
+                            </div>
+                            
+                            {/* Right Column: Key Financial Targets */}
+                            <div class="chart-card lg:col-span-2 flex flex-col h-[250px]">
+                                <SectionHeader
+                                    title="Financial Stability Milestones (2026 Q1)"
+                                    subtitle="Tracking critical revenue and operational security goals."
+                                />
+                                <div class="grid grid-cols-2 gap-4 mt-2">
+                                    <div class="p-4 rounded-lg border-l-4 border-yellow-500 bg-gray-700/50">
+                                        <p class="text-lg font-semibold text-white">Main Partner Secured</p>
+                                        <p class="text-sm text-gray-400">Status: In Negotiation</p>
+                                        <p class="text-xs text-yellow-400 mt-1">Goal: Significant cash injection (Q1 2026)</p>
+                                    </div>
+                                    <div class="p-4 rounded-lg border-l-4 border-red-500 bg-gray-700/50">
+                                        <p class="text-lg font-semibold text-white">Game Venue Secured</p>
+                                        <p class="text-sm text-gray-400">Status: Venue Identified</p>
+                                        <p class="text-xs text-red-400 mt-1">Goal: Stabilize operations and reduce DBBF fines</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
+                        <footer class="text-center mt-12 pt-6 border-t border-gray-700">
+                            <p class="text-gray-500 text-sm">Talata Basketball Command Center | Data Visualization Interface</p>
+                        </footer>
                     </div>
-                </div>
+                );
+            };
 
-                <footer class="text-center mt-12 pt-6 border-t border-gray-700">
-                    <p class="text-gray-500 text-sm">Talata Basketball Command Center | Data Visualization Interface</p>
-                </footer>
-            </div>
-        );
-    };
+            // Render the App component into the root DOM element
+            const rootElement = document.getElementById('root');
+            
+            // Render the App after the short delay
+            ReactDOM.render(<App />, rootElement);
 
-    // Render the App component into the root DOM element
-    const rootElement = document.getElementById('root');
-    
-    // Final render initiation
-    ReactDOM.render(<App />, rootElement);
-</script>
+        }, 100); // 100ms delay to ensure dependencies are loaded
+    </script>
+</body>
+</html>
